@@ -1,0 +1,203 @@
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <title>Spielstände</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <style>
+            body{
+                font-size:25px;
+            }
+            table, th, td {
+                            font-size: 25px;
+                            width: 40px;
+                            border: 1px solid black;
+                            border-collapse: collapse;
+                            padding: 7px;
+                            }
+            .testClass{
+                overflow-x: scroll;
+                overflow-y: hidden;
+                width: 90vw;
+                height: auto;
+            }
+            input{
+                width: 40px;
+            }
+            button{
+                font: larger;
+            }
+        </style>
+    </head>
+    <body>
+        <center>
+            <br>
+            <h1>Spielstände</h1>
+            <br>
+            <h3>Das große Familien Battle</h3>
+            <br><br>
+        </center>
+        <table style="border:white;">
+            <tr style="border:white;">
+                <td style="width: 5vw; border:white;"></td>
+                <td style="width: 10vw; border:white;"><p id="NamenTable">tt</p></td>
+                <td style="width: 70vw; border:white;"><div class="testClass"><p id="SpielstTable"></p></div></td>
+                <td style="width: 5vw; border:white;"></td>
+            </tr>
+            <tr style="border:white;">
+                <td style="border:white;"></td>
+            </tr>
+            <tr style="border:white;">
+                <td style="border:white;"></td>
+                <td style="border:white;"></td>
+                <td style="border:white;">
+                    <button onclick="CreateNewUser(Spieler)">Neuer Spieler</button>
+                      
+                    <button onclick="WriteTable(Spieler)">Nächste Runde</button>
+                </td>
+                <td style="border:white;"></td>
+            </tr>
+        </table>
+        <br><br>
+        <center>
+            <div id="myPlot" style="width:100%;max-width:700px"></div>
+        </center>
+
+        <script>
+            var Spieler=[];
+            Spieler=CreateNewUser(Spieler);
+            Spieler=CreateNewUser(Spieler);
+            
+            function CreateNewUser(Spieler){
+                var name = prompt("SpielerIn Name");
+                Spieler.push({
+                    name: name,
+                    pkt: "0",
+                });
+                WriteTable(Spieler);
+                return Spieler;
+            };
+            function WriteTable(Spieler){
+                AnzahlSpieler=Spieler.length;
+                let AnzahlSpiele=0; 
+                for(let i=0;i<AnzahlSpieler;i++){
+                    Buf=Spieler[i].pkt.split(":").length;
+                    //console.log("buf"+Buf);
+                    if(Buf>AnzahlSpiele){
+                        AnzahlSpiele=Buf;
+                    }
+                };
+                let TableSpiele ="";
+                for(let i=0;i<=AnzahlSpiele;i++){
+                    TableSpiele+='<th>'+(i+1)+'</th>\n';
+                };
+                let TableSpieler="";
+                let NameTabel="<th>Spieler</th>\n";
+                for(let i=0;i<AnzahlSpieler;i++){
+                    Punktefolge=Spieler[i].pkt.split(":");
+                    let Spielpunkte="";
+                    var Summe=0;
+                    for(k=0;k<AnzahlSpiele;k++){
+                        if (typeof Punktefolge[k] === 'undefined') { // wenn pkt anzahl zu klein
+                            Spieler[i].pkt=Spieler[i].pkt+":0";
+                            Punktefolge=Spieler[i].pkt.split(":");
+                        }
+                        Spielpunkte+='<td>'+Punktefolge[k]+'</td>\n';
+                        Summe+=Number(Punktefolge[k]);
+                    };
+                    let InputVal=`<td id="TableSpieler`+i+`"><input id="Spieler`+i+`" type="number" placeholder="0" onblur="getVal(`+i+`)"></td>\n`;
+
+                    TableSpieler+='<tr>'+Spielpunkte+InputVal+'<td id="SumSpieler'+i+'">'+Summe+'</td>\n</tr>\n';
+                    NameTabel+='<tr>\n<td>'+Spieler[i].name+'</td>\n'
+                }; 
+                //console.log(TableSpieler);
+                let Table= `
+                    <table>
+                        <tr>`
+                            +TableSpiele+ `
+                            <th>Summe</th> 
+                        </tr> `
+                        +TableSpieler+ `
+                    </table> `;
+                document.getElementById("SpielstTable").innerHTML=Table;
+                document.getElementById("NamenTable").innerHTML="<table>\n"+NameTabel+"</table>";
+                Plot(Spieler);
+            };
+            function getVal(idNumber) {
+                //console.log("getVal");
+                const val = document.getElementById("Spieler"+idNumber).value;
+                var id = "Spieler"+idNumber;
+                //console.log(val);
+                //console.log(id);
+                if(val){
+                    document.getElementById("Table"+id).innerHTML=val;
+                    Spieler[id.split("r")[1]].pkt+=":"+val.toString();
+                }
+                //console.log(Spieler[id.split("r")[1]].pkt);
+                RefreshSum(id, val);
+
+            }
+            function RefreshSum(id, val){
+                document.getElementById("Sum"+id).innerHTML=(Number(document.getElementById("Sum"+id).innerHTML)+Number(val)).toString();
+            }
+
+            //console.log("test");
+            //console.log(Spieler);
+
+            function Plot(Spieler){
+                AnzahlSpieler=Spieler.length;
+                let AnzahlSpiele=0; 
+                for(let i=0;i<AnzahlSpieler;i++){
+                    Buf=Spieler[i].pkt.split(":").length;
+                    //console.log("buf"+Buf);
+                    if(Buf>AnzahlSpiele){
+                        AnzahlSpiele=Buf;
+                    }
+                };
+                var xArray = [];
+                for (i=0;i<AnzahlSpiele;i++){
+                    xArray.push(i);
+                }
+                var yArray = [];
+                for(k=0;k<AnzahlSpieler;k++){
+                    var yVal=[];
+                    for (i=0;i<AnzahlSpiele;i++){
+                        if(i==0){
+                            yVal.push(Spieler[k].pkt.split(":")[i]);
+                        }else{
+                            yVal.push(Number(Spieler[k].pkt.split(":")[i])+Number(yVal[i-1]));
+                        }
+                    }
+                    yArray.push(yVal);
+                }
+                //console.log(xArray);
+                //console.log(yArray);
+
+                // Define Data
+                var data = []
+                for(k=0;k<AnzahlSpieler;k++){
+                    data.push({x: xArray, y: yArray[k], mode:"lines", name:Spieler[k].name});
+                }
+                //console.log(data);
+                // Define Layout
+                var layout = {
+                xaxis: {title: "Spiele"},
+                yaxis: {title: "Punkte"},  
+                //title: "House Prices vs. Size"
+                };
+
+                // Display using Plotly
+                Plotly.newPlot("myPlot", data, layout);
+            };
+
+        </script>
+
+    </body>
+</html>
+
+
+<!-- ToDo:
+- GUI
+- Graphik
+- Name doppelt -> kein Problem?
+- korrektur
+- Print erg-->
