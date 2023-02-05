@@ -1,0 +1,2 @@
+# SpielStaende
+Spielstände aufeinander folgen
